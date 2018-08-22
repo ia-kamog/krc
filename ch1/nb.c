@@ -16,6 +16,6 @@ main(void)
 			++nn;
 	printf("%6s%6s%6s\n"
 		   "%6d%6d%6d\n",
-		   "' '", "'\\t'", "'\\n'",
+		   "SP", "HT", "LF",
 		   nb, nt, nn);
 }
