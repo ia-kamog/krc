@@ -16,41 +16,35 @@ int main(void)
 	beginnings of strings, character literals and comments */
 void text(void)
 {
-	int c;
+	int c1, c2;
 
-	while ((c = getchar()) != EOF) {
-		if (c == '/') {
-			if ((c = getchar()) == '*') {
-				comment();
-				continue;
-			} else {
-				ungetc(c,stdin);
-				c = '/';
+	while ((c1 = getchar()) != EOF
+		   && (c2 = getchar()) != EOF)
+		if (c1 == '/' && c2 == '*')
+			comment();
+		else {
+			ungetc(c2, stdin);
+			putchar(c1);
+			switch (c1) {
+			case '"': string(); break;
+			case '\'': chrlit(); break;
 			}
 		}
-
-		putchar(c);
-		switch (c) {
-		case '"': string(); break;
-		case '\'': chrlit(); break;
-		}
-	}
+	if (c1 != EOF)
+		putchar(c1);
 }
 
 /* string:  deal with characters in strings */
 void string(void)
 {
 	int c;
-	int escape = 0;
-	
+
 	while ((c = getchar()) != EOF) {
 		putchar(c);
-		if (escape)
-			escape = 0;
-		else if (c == '\\')
-			escape = 1;
-		else if (c == '"')
+		if (c == '"')
 			return;
+		else if (c == '\\' && (c=getchar()) != EOF)
+			putchar(c);
 	}
 }
 
@@ -58,16 +52,13 @@ void string(void)
 void chrlit(void)
 {
 	int c;
-	int escape = 0;
-	
+		
 	while ((c = getchar()) != EOF) {
 		putchar(c);
-		if (escape)
-			escape = 0;
-		else if (c == '\\')
-			escape = 1;
-		else if (c == '\'')
+		if (c == '\'')
 			return;
+		else if (c == '\\' && (c=getchar()) != EOF)
+			putchar(c);
 	}
 }
 
