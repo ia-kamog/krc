@@ -1,19 +1,19 @@
 void reverse(char []);
 
 /* itoa:  convert n to characters in s */
-void itoa(int n, char s[])
+void itoa(int n, char s[], int w)
 {
-	int i, sign, d;
+	int i, sign;
 
-	i = 0;
 	sign = n;
+	i = 0;
 	do {
-		if ((d = n % 10) < 0)
-			d = -d;
-		s[i++] = d + '0';
-	} while ((n /= 10) != 0);
+		s[i++] = (sign > 0 ? n : -n)%10 + '0', w--;
+	} while (n /= 10);
 	if (sign < 0)
-		s[i++] = '-';
+		s[i++] = '-', w--;
+	while (w-- > 0)
+		s[i++] = ' ';
 	s[i] = '\0';
 	reverse(s);
 }

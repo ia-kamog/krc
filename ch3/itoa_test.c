@@ -1,19 +1,16 @@
 #include <stdio.h>
 
-int atoi(const char s[]);
-void itoa(int n, char s[]);
+void itoa(int n, char s[], int w);
 
 /* test atoi and itoa function */
 int main(void)
 {
-	int n;
-	char buf[100], s[100];
+	int n, w;
+	char s[100];
 
-	while (fgets(buf, sizeof buf, stdin)) {
-		n = atoi(buf);
-		itoa(n, s);
+	while (scanf("%d%d", &w, &n) == 2) {
+		itoa(n, s, w);
 		printf("%s\n", s);
 	}
-
 	return 0;
 }
