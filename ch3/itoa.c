@@ -1,16 +1,20 @@
+#include <limits.h>
 void reverse(char []);
 
 /* itoa:  convert n to characters in s */
 void itoa(int n, char s[], int w)
 {
-	int i, sign;
+	int i;
+	unsigned a;
 
-	sign = n;
+	a = n;
+	if (n < 0)
+		a = UINT_MAX - a + 1;
 	i = 0;
 	do {
-		s[i++] = (sign > 0 ? n : -n)%10 + '0', w--;
-	} while (n /= 10);
-	if (sign < 0)
+		s[i++] = a % 10 + '0', w--;
+	} while (a /= 10);
+	if (n < 0)
 		s[i++] = '-', w--;
 	while (w-- > 0)
 		s[i++] = ' ';
