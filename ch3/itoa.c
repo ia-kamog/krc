@@ -3,14 +3,15 @@ void reverse(char []);
 /* itoa:  convert n to characters in s */
 void itoa(int n, char s[])
 {
-	int i, sign;
-	
-	if ((sign = n) < 0)
-		n = -n;
+	int i, sign, d;
+
 	i = 0;
+	sign = n;
 	do {
-		s[i++] = n % 10 + '0';
-	} while ((n /= 10) > 0);
+		if ((d = n % 10) < 0)
+			d = -d;
+		s[i++] = d + '0';
+	} while ((n /= 10) != 0);
 	if (sign < 0)
 		s[i++] = '-';
 	s[i] = '\0';
