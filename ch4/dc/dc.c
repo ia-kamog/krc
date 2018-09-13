@@ -11,25 +11,42 @@ int getop(char []);
 void push(double);
 double pop(void);
 double get(void);
-void pr(void);
-void dup(void);
-void swap(void);
-void cs(void);
+/* stack operations */
+double pr(void);
+double dup(void);
+double swap(double, double);
+double cs(void);
+
 void print(double);
 int empty(void);
 
+struct function {
+	double (*ptr)();
+	char *name;
+	short args:3, res:1;
+} functions[] = {
+	{pr, "pr", 0, 0},
+	{dup, "dup", 0, 1},
+	{swap, "swap", 2, 0},
+	{cs, "cs", 0, 0},
+	{sin, "sin", 1, 1},
+	{cos, "cos", 1, 1},
+	{exp, "exp", 1, 1},
+	{pow, "pow", 2, 1}
+};
+enum { NFUNS = sizeof functions / sizeof *functions };
+void call(struct function);
+
 /* reverse Polish calculator
 	exercise 4-3: add modulus operator and negative numbers
-	exercise 4-4: add stack operations */
+	exercise 4-4: add stack operations 
+	exercise 4-5: math functions */
 int main(void)
 {
 	int type, i;
 	double op2;
 	char s[MAXOP];
-	char *funs[] = { "pr", "dup", "swap", "cs" };
-	void (*fun_ptr[])(void) = {pr,dup,swap,cs};
-	enum { NFUNS = sizeof funs/sizeof *funs };
-	
+
 	while ((type = getop(s)) != EOF) {
 		switch (type) {
 		case NUMBER:
@@ -37,8 +54,8 @@ int main(void)
 			break;
 		case IDENT:
 			for (i = 0; i < NFUNS; i++)
-				if (strcmp(funs[i], s) == 0) {
-					fun_ptr[i]();
+				if (strcmp(functions[i].name, s) == 0) {
+					call(functions[i]);
 					break;
 				}
 			if (i == NFUNS)
@@ -90,6 +107,34 @@ void print(double x) /* print:  output x */
 int sp = 0;				/* next free stack position */
 double val[MAXVAL];		/* value stack */
 
+/* call: perform call of f on stack arguments */
+void call(struct function f)
+{
+	double op1, op2, op3, r;
+	if (f.args > sp) {
+		printf("error: not enough arguments\n");
+		return;
+	}
+	switch (f.args) {
+	case 3:
+		op1 = pop(), op2 = pop(), op3 = pop();
+		r = f.ptr(op1,op2,op3);
+		break;
+	case 2:
+		op1 = pop(), op2 = pop();
+		r = f.ptr(op1,op2);
+		break;
+	case 1:
+		op1 = pop();
+		r = f.ptr(op1);
+		break;
+	case 0:
+		r = f.ptr();
+	}
+	if (f.res)
+		push(r);
+}
+
 double get(void) /* get element without popping */
 {
 	if (sp > 0)
@@ -116,32 +161,29 @@ double pop(void)
 	return x;
 }
 
-void cs(void) /* empty the stack */
+double cs(void) /* empty the stack */
 {
 	sp = 0;
+	return 0;
 }
 
-void pr(void) /* print top element */
+double pr(void) /* print top element */
 {
 	print(get());
+	return 0;
 }
 
-void dup(void) /* duplicate element on top */
+double dup(void) /* duplicate element on top */
 {
 	double x = get();
-	if (sp > 0)
-		push(get());
+	return x;
 }
 
-void swap(void) /* swap elements on top */
+double swap(double a, double b) /* swap elements on top */
 {
-	double x;
-	if (sp >= 2) {
-		x = get();
-		push(get());
-		push(x);
-	} else
-		printf("error: swap: not enough elements\n");
+	push(a);
+	push(b);
+	return 0;
 }
 
 int empty(void) /* is the stack empty? */
