@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>		/* for atof() */
 
@@ -8,7 +9,8 @@ int getop(char []);
 void push(double);
 double pop(void);
 
-/* reverse Polish calculator */
+/* reverse Polish calculator
+	exercise 4-3: add modulus operator and negative numbers */
 int main(void)
 {
 	int type;
@@ -36,6 +38,13 @@ int main(void)
 				push(pop() / op2);
 			else
 				printf("error: zero divisor\n");
+			break;
+		case '%':
+			op2 = pop();
+			if (op2 != 0.0)
+				push(fmod(pop(), op2));
+			else
+				printf("error: zero division\n");
 			break;
 		case '\n':
 			printf("\t%.8g\n", pop());
@@ -86,9 +95,17 @@ int getop(char s[])
 	while ((s[0] = c = getch()) == ' ' || c == '\t')
 		;
 	s[1] = '\0';
-	if (!isdigit(c) && c != '.')
+	if (!isdigit(c) && c != '.' && c != '-')
 		return c;	/* not a number */
 	i = 0;
+	if (c == '-') {
+		c = getch();
+		if (!isdigit(c)) {
+			ungetch(c);
+			return '-';
+		} else
+			s[++i] = c;
+	}
 	if (isdigit(c))	/* collect integer part */
 		while (isdigit(s[++i] = c = getch()))
 			;
