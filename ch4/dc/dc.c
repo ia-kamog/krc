@@ -45,7 +45,9 @@ void call(struct function);
 	exercise 4-3: add modulus operator and negative numbers
 	exercise 4-4: add stack operations 
 	exercise 4-5: math functions
-	exercise 4-6: add variables */
+	exercise 4-6: add variables
+	exercise 4-7: add ungets
+	exercise 4-9: ungetc handles EOF */
 int main(void)
 {
 	int type, i;
@@ -260,7 +262,7 @@ int readpos(char s[], int lim)
 
 	while (lim > 1 && isdigit(c=getch()))
 		s[i++] = c, lim--;
-	if (c != EOF && lim)
+	if (lim > 0)
 		ungetch(c);
 	s[i] = '\0';
 	return i;
@@ -274,8 +276,7 @@ int readint(char s[], int lim) /* read integer into s, return length */
 		s[0] = c;
 		return 1+readpos(s+1, lim-1);
 	} else {
-		if (c != EOF)
-			ungetch(c);
+		ungetch(c);
 		return readpos(s, lim);
 	}
 }
@@ -331,7 +332,7 @@ int getdig(char s[]) /* get number into s */
 	if (c == 'e' || c == 'E') {
 		s[i++] = c;
 		i += readint(s+i, MAXOP-i);
-	} else if (c != EOF)
+	} else
 		ungetch(c);
 	
 	if (i > 0 && (s[i-1] == 'e' || s[i-1] == 'E'))
@@ -358,8 +359,7 @@ int getident(char s[], int lim)
 			  c == '-');
 		 i++)
 		s[i] = c;
-	if (c != EOF)
-		ungetch(c);
+	ungetch(c);
 	s[i] = '\0';
 	return IDENT;
 }
@@ -376,6 +376,8 @@ int getch(void)	/* get a (possibly pushed back) character */
 
 void ungetch(int c)	/* push character back on input */
 {
+	if (c == EOF)
+		return;
 	if (bufp >= BUFSIZE)
 		printf("ungetch: too many characters\n");
 	else
