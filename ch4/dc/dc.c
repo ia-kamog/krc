@@ -6,19 +6,23 @@
 #define MAXOP	100		/* max size of operand or operator */
 #define NUMBER	'0'		/* signal that a number was found */
 #define IDENT	'i'
+#define SETVAR	'!'
+#define GETVAR	'$'
 
+void print(double);
 int getop(char []);
 void push(double);
 double pop(void);
 double get(void);
+int empty(void);
 /* stack operations */
 double pr(void);
 double dup(void);
 double swap(double, double);
 double cs(void);
-
-void print(double);
-int empty(void);
+/* variable operations */
+void setvar(char s[], double);
+double fetchvar(char s[]);
 
 struct function {
 	double (*ptr)();
@@ -40,7 +44,8 @@ void call(struct function);
 /* reverse Polish calculator
 	exercise 4-3: add modulus operator and negative numbers
 	exercise 4-4: add stack operations 
-	exercise 4-5: math functions */
+	exercise 4-5: math functions
+	exercise 4-6: add variables */
 int main(void)
 {
 	int type, i;
@@ -60,6 +65,12 @@ int main(void)
 				}
 			if (i == NFUNS)
 				printf("error: unknown operation\n");
+			break;
+		case SETVAR:
+			setvar(s, pop());
+			break;
+		case GETVAR:
+			push(fetchvar(s));
 			break;
 		case '+':
 			push(pop() + pop());
@@ -97,8 +108,47 @@ int main(void)
 	return 0;
 }
 
+#define MAXVARTBL	100
+#define MAXVAR		10
+int vsz = 0;
+double vartbl[MAXVARTBL];
+char varnames[MAXVARTBL][MAXVAR];
+
+/* set variable s to value x */
+void setvar(char s[], double x)
+{
+	int i;
+
+	for (i = 0; i < vsz; i++)
+		if (strcmp(varnames[i], s) == 0) {
+			vartbl[i] = x;
+			break;
+		}
+	if (i == vsz) {
+		if (vsz < MAXVARTBL) {
+			strcpy(varnames[i], s);
+			vartbl[i] = x;
+			++vsz;
+		} else
+			printf("error: variable table filled\n");
+	}
+}
+
+/* get variable named s */
+double fetchvar(char s[])
+{
+	int i;
+
+	for (i = 0; i < vsz; i++)
+		if (strcmp(varnames[i], s) == 0)
+			return vartbl[i];
+	printf("error: unknown variable %s\n", s);
+	return 0;
+}
+
 void print(double x) /* print:  output x */
 {
+	setvar("", x);
 	printf("\t%.8g\n", x);
 }
 
@@ -198,7 +248,7 @@ void ungetch(int);
 void skip_space(void);
 int peek(void);
 int getdig(char s[]);
-int getident(char s[]);
+int getident(char s[], int lim);
 int getother(char s[]);
 int readpos(char s[], int lim);
 int readint(char s[], int lim);
@@ -236,16 +286,25 @@ int getop(char s[])
 	int c;
 
 	skip_space();
-	c = peek();
-	if (isdigit(c) || c == '.' || c == '-')
+	s[0] = c = getch();
+	if (isdigit(c) || c == '.' || c == '-') {
+		ungetch(c);
 		return getdig(s);
-	else if (isalpha(c) || c == '_')
-		return getident(s);
+	} else if (isalpha(c) || c == '_')
+		return getident(s+1, MAXOP-1);
 	else if (c == EOF) {
 		s[0] = '\0';
 		return c;
-	} else
+	} else if (c == SETVAR) {
+		getident(s, MAXVAR);
+		return SETVAR;
+	} else if (c == GETVAR) {
+		getident(s, MAXVAR);
+		return GETVAR;
+	} else {
+		ungetch(c);
 		return getother(s);
+	}
 }
 
 void skip_space(void) /* skip spaces in input */
@@ -288,11 +347,12 @@ int getother(char s[]) /* get other kind of character */
 	return s[0];
 }
 
-int getident(char s[]) /* get identifier into s, return INDENTIFIER */
+/* get identifier into s, return INDENTIFIER */
+int getident(char s[], int lim) 
 {
 	int c, i;
 
-	for (i = 0; i < MAXOP-1 &&
+	for (i = 0; i < lim-1 &&
 			 (isalpha(c = getch()) ||
 			  isdigit(c) ||
 			  c == '-');
