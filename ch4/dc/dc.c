@@ -393,3 +393,12 @@ int peek(void) /* peek character */
 	}
 	return c;
 }
+
+/* ungets:  put s into lookahead buffer */
+void ungets(const char s[])
+{
+	int i;
+
+	for (i = strlen(s)-1; bufp < BUFSIZE && i >= 0; i--)
+		buf[bufp++] = s[i];
+}
