@@ -1,22 +1,26 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BUFSIZE 100000
 #define MAXLINES 5000		/* max #lines to be sorted */
 
 char *lineptr[MAXLINES];	/* pointers to text lines */
 
-int readlines(char *lineptr[], int nlines);
+int readlines(char *lineptr[], int nlines, char *buf, int bufsz);
 void writelines(char *lineptr[], int nlines);
 
 void qsort(char *lineptr[], int left, int right);
 
-/* sort input lines */
+/* sort input lines
+	exercise 5-7: use local buffer instead of alloc */
 int
 main(void)
 {
 	int nlines;		// number of input lines read
-
-	if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
+	char buf[BUFSIZE];
+	
+	if ((nlines = readlines(lineptr, MAXLINES,
+							buf, BUFSIZE)) >= 0) {
 		qsort(lineptr, 0, nlines-1);
 		writelines(lineptr, nlines);
 		return 0;
@@ -26,26 +30,28 @@ main(void)
 	}
 }
 
-#define MAXLEN 1000		// max length of any input line
 int getline(char *, int);
 char *alloc(int);
 
 // readlines:  read input lines
 int
-readlines(char *lineptr[], int maxlines)
+readlines(char *lineptr[], int maxlines,
+		  char *buf, int bufsize)
 {
 	int len, nlines;
-	char *p, line[MAXLEN];
+	char *p = buf;
 
 	nlines = 0;
-	while ((len = getline(line, MAXLEN)) > 0)
-		if (nlines >= maxlines || (p = alloc(len)) == NULL)
+	while (p-buf<bufsize &&
+		   (len=getline(p,bufsize-(p-buf))) > 0)
+		if (nlines >= maxlines)
 			return -1;
 		else {
-			line[len-1] = '\0'; // delete newline
-			strcpy(p, line);
 			lineptr[nlines++] = p;
-		}
+			p += len+1;
+			if (p > buf+1 && p[-2] == '\n')
+				p[-2] = '\0';
+		}					
 	return nlines;
 }
 
