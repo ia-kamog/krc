@@ -9,22 +9,31 @@ day_of_year(int year, int month, int day)
 {
 	int i, leap;
 
+	if (year == 0 || month < 1 || month > 12)
+		return -1;
 	leap = year%4 == 0 && year%100 != 0 || year%400 == 0;
+	if (day > 366 || !leap && day > 365)
+		return -1;
 	for (i = 1; i < month; i++)
 		day += daytab[leap][i];
 	return day;
 }
 
 /* month_day:  set month, day from day of year */
-void
+int
 month_day(int year, int yearday,
 		  int *pmonth, int *pday)
 {
 	int i, leap;
 
+	if (year == 0)
+		return -1;
 	leap = year%4 == 0 && year%100 != 0 || year%400 == 0;
+	if (yearday > 366 || !leap && yearday > 365)
+		return -1;
 	for (i = 1; yearday > daytab[leap][i]; i++)
 		yearday -= daytab[leap][i];
 	*pmonth = i;
 	*pday = yearday;
+	return 0;
 }
