@@ -66,7 +66,7 @@ fillstops(int argc, char *argv[], int *s)
 		max = *p;
 	}
 	inc = (p==s)?TABSTOP:p[-1]-((p-1!=s)?p[-2]:0);
-	*(p + (p-s == MAXTSTOPS-1)) = 0;
+	*p = 0;
 	return inc;
 }
 
