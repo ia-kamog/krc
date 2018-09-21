@@ -121,7 +121,7 @@ getword(char *word, int lim)
 		*w = '\0';
 		return c;
 	}
-	for (; --lim > 0; w++)
+	for (; --lim > 1; w++)
 		if (!isalnum(*w = getch()) && c != '_') {
 			ungetch(*w);
 			break;
