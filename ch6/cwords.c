@@ -46,7 +46,8 @@ struct key {
 int getword(char *, int);
 int binsearch(char *, struct key *, int);
 
-/* count C keywords */
+/* count C keywords 
+	exercise 6-1:  handle string literals and comments */
 int
 main(void)
 {
@@ -88,7 +89,7 @@ binsearch(char *word, struct key tab[], int n)
 int
 getword(char *word, int lim)
 {
-	int c, getch(void);
+	int c, getch(void), esc = 0, t;
 	void ungetch(int);
 	char *w = word;
 
@@ -96,12 +97,32 @@ getword(char *word, int lim)
 		;
 	if (c != EOF)
 		*w++ = c;
-	if (!isalpha(c)) {
+	if (c == '"') {
+		while ((c=getch()) != EOF &&
+			   c != '"' && !esc) {
+			if (esc)
+				esc = 0;
+			else if (c == '\\')
+				esc = 1;
+		}
+		return '"';
+	}
+	if (c == '/') {
+		t = getch();
+		if (t == '*') {
+			while ((c=getch()) != EOF &&
+				   c != '*' && getch() != '/')
+				;
+			return '#';
+		} else
+			ungetch(t);
+	}
+	if (!isalpha(c) && c != '_') {
 		*w = '\0';
 		return c;
 	}
 	for (; --lim > 0; w++)
-		if (!isalnum(*w = getch())) {
+		if (!isalnum(*w = getch()) && c != '_') {
 			ungetch(*w);
 			break;
 		}
