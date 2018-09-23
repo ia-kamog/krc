@@ -3,59 +3,95 @@
 #include <string.h>
 
 #define MAXTOKEN 100
+#define MAXDECL 500
+#define MAXOUT 2000
+#define MAXELTS 100
 
-enum { NAME, PARENS, BRACKETS };
+enum { NAME, PARENS, BRACKETS, CONST };
 
-int dcl(void);
-int dirdcl(void);
+int dcl(char *out, char *name, char *datatype);
+int dirdcl(char *out, char *name, char *datatype);
+int decl(char *out);
 
 int gettoken(void);
 int tokentype;			/* type of last token */
 char token[MAXTOKEN];	/* last token string */
-char name[MAXTOKEN];	/* identifier name */
-char datatype[MAXTOKEN]; /* data type = char, int, etc. */
-char out[100];
+int line = 0;
+int putback = 0;
 
 /* convert declaration to words
-	exercise 5-18: recover from input errors */
+	exercise 5-18: recover from input errors
+	exercise 5-20: handle const and function parameters */
 int
 main(void)
 {
+	char out[MAXOUT];
+	
 	while (gettoken() != EOF) {		/* 1st token on line */
-		strcpy(datatype, token);	/* is the datatype */
 		out[0] = '\0';
-		if (!dcl() || tokentype != '\n') {
-			printf("syntax error\n");
-			continue;
-		}
-		printf("%s: %s %s\n", name, out, datatype);
+		line = 0;
+		decl(out);
+		printf("%s\n", out);
 	}
 	return 0;
 }
 
+int
+decl(char *out)
+{
+	char name[MAXTOKEN], datatype[MAXTOKEN], out2[MAXOUT];
+	int curline;
+	int cnst = 0;
+	curline = line;
+	line = 1;
+	out2[0] = '\0';
+	if (tokentype == CONST) {
+		cnst = 1;
+		tokentype = gettoken();
+	}
+	if (tokentype == EOF)
+		return 1;
+	strcpy(datatype, token);
+	tokentype = gettoken();
+	if (tokentype == CONST)
+		cnst = 1;
+	else
+		putback = 1;
+	if (!dcl(out2, name, datatype))
+		printf("syntax error\n");
+	else {
+		sprintf(out+strlen(out), "%s%s: %s%s%s",
+				(curline ? " ": ""),
+				name, out2,
+				(cnst? "const ":""), datatype);
+		return 1;
+	}
+	return 0;
+}
 /* dcl:  parse a declarator */
 int
-dcl(void)
+dcl(char *out, char *name, char *datatype)
 {
-	int ns;
+	int elts[MAXELTS], i;
 
-	for (ns = 0; gettoken() == '*'; )	/* count *'s */
-		ns++;
-	if (!dirdcl())
+	for (i = 0; gettoken() == '*' || tokentype == CONST; i++)	/* count *'s */
+		elts[i] = tokentype;
+	if (!dirdcl(out, name, datatype))
 		return 0;
-	while (ns-- > 0)
-		strcat(out, " pointer to");
+	while (--i >= 0)
+		if (elts[i] == CONST)
+			strcat(out, "const ");
+		else
+			strcat(out, "pointer to ");
 	return 1;
 }
 
 /* dirdcl:  parse a direct declarator */
 int
-dirdcl(void)
+dirdcl(char *out, char *name, char *datatype)
 {
-	int type;
-
 	if (tokentype == '(') {			/* ( dcl ) */
-		dcl();
+		dcl(out, name, datatype);
 		if (tokentype != ')') {
 			printf("error: missing )\n");
 			return 0;
@@ -66,14 +102,31 @@ dirdcl(void)
 		printf("error: expected name or (dcl)\n");
 		return 0;
 	}
-	while ((type=gettoken()) == PARENS || type == BRACKETS)
-		if (type == PARENS)
-			strcat(out, " function returning");
-		else {
+	while ((tokentype=gettoken()) == '(' ||
+		   tokentype == PARENS ||
+		   tokentype == BRACKETS) {
+		out += strlen(out);
+		if (tokentype == PARENS)
+			strcat(out, "function returning");
+		else if (tokentype == '(') {
+			strcat(out, "function taking");
+			do {
+				if (tokentype == ',')
+					strcat(out, ", ");
+				tokentype = gettoken();
+				decl(out);
+			} while (tokentype == ',');
+			if (tokentype != ')') {
+				printf("error: missing )\n");
+				return 0;
+			}
+			strcat(out, " and returning ");
+		} else {
 			strcat(out, " array");
 			strcat(out, token);
 			strcat(out, " of");
 		}
+	}
 	return 1;
 }
 
@@ -85,6 +138,10 @@ gettoken(void)
 	void ungetch(int);
 	char *p = token;
 
+	if (putback) {
+		putback = 0;
+		return tokentype;
+	}
 	while ((c = getch()) == ' ' || c == '\t')
 		;
 	if (c == '(') {
@@ -105,7 +162,10 @@ gettoken(void)
 			*p++ = c;
 		*p = '\0';
 		ungetch(c);
-		return tokentype = NAME;
+		if (strcmp(token, "const") == 0)
+			return tokentype = CONST;
+		else
+			return tokentype = NAME;
 	} else
 		return tokentype = c;
 }
