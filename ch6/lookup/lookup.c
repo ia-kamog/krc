@@ -7,6 +7,22 @@ static struct nlist *hashtab[HASHSIZE];	/* pointer table */
 
 static unsigned hash(const char *s);
 
+/* undef:  make symbol named s undefined */
+void
+undef(const char *s)
+{
+	struct nlist **pp, *p;
+
+	for (pp = &hashtab[HASHSIZE]; *pp != NULL; pp = &(**pp).next)
+		if (strcmp(s, (**pp).name) == 0) {
+			p = *pp;
+			free(p->name);
+			free(p->defn);
+			*pp = p->next;
+			free(p);
+		}
+}
+
 /* hash:  form hash value for string s */
 static unsigned
 hash(const char *s)

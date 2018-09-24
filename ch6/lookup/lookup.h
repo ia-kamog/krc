@@ -8,4 +8,5 @@ struct nlist {		/* table entry */
 
 struct nlist *lookup(const char *s);
 struct nlist *install(char *name, char *defn);
+void undef(const char *name);
 #endif
