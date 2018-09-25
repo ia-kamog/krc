@@ -13,13 +13,14 @@ undef(const char *s)
 {
 	struct nlist **pp, *p;
 
-	for (pp = &hashtab[HASHSIZE]; *pp != NULL; pp = &(**pp).next)
-		if (strcmp(s, (**pp).name) == 0) {
-			p = *pp;
+	for (pp = &hashtab[hash(s)]; (p = *pp) != NULL; pp = &(**pp).next)
+		if (strcmp(s, p->name) == 0) {
 			free(p->name);
 			free(p->defn);
 			*pp = p->next;
 			free(p);
+			if (*pp == NULL)
+				break;
 		}
 }
 
